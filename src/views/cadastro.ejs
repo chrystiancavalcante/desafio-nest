@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Usuário</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 600px; /* Aumente este valor para ajustar a largura do card */
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    button[type="submit"],
+    button[type="button"] {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    button[type="submit"]:hover,
+    button[type="button"]:hover {
+      background-color: #0056b3;
+    }
+
+    #message {
+      margin-top: 10px;
+      text-align: center;
+      color: #007bff;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Cadastro de Usuário</h1>
+    <form id="userForm" onsubmit="return submitForm(event)" method="POST">
+      <label for="fullName">Nome Completo:</label>
+      <input type="text" id="fullName" name="fullName" required>
+
+      <label for="email">E-mail:</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="password">Senha:</label>
+      <input type="password" id="password" name="password" required>
+
+      <label for="zip">CEP:</label>
+      <div style="display: flex;">
+        <input type="text" id="zip" name="zip" required>
+        <button type="button" onclick="fetchAddress()" style="margin-left: 10px;">Buscar Endereço</button>
+      </div>
+
+      <label for="street">Rua:</label>
+      <input type="text" id="street" name="street" required>
+
+      <label for="neighborhood">Bairro:</label>
+      <input type="text" id="neighborhood" name="neighborhood" required>
+
+      <label for="number">Número:</label>
+      <input type="text" id="number" name="number" required>
+
+      <label for="city">Cidade:</label>
+      <input type="text" id="city" name="city" required>
+
+      <label for="state">Estado:</label>
+      <input type="text" id="state" name="state" required>
+
+      <button type="submit">Cadastrar</button>
+    </form>
+
+    <div id="message"></div>
+  </div>
+
+  <script>
+    async function fetchAddress() {
+      const zip = document.getElementById('zip').value;
+      if (zip) {
+        try {
+          const response = await fetch(`/users/address/${zip}`);
+          if (!response.ok) {
+            throw new Error('Erro ao buscar o endereço');
+          }
+          const address = await response.json();
+          document.getElementById('street').value = address.street;
+          document.getElementById('neighborhood').value = address.neighborhood;
+          document.getElementById('city').value = address.city;
+          document.getElementById('state').value = address.state;
+        } catch (error) {
+          console.error(error);
+          alert('Erro ao buscar o endereço. Verifique o CEP e tente novamente.');
+        }
+      }
+    }
+
+    async function submitForm(event) {
+      event.preventDefault();
+
+      const form = document.getElementById('userForm');
+      const formData = new FormData(form);
+
+      const payload = {
+        fullName: formData.get('fullName'),
+        email: formData.get('email'),
+        password: formData.get('password'),
+        address: {
+          zip: formData.get('zip'),
+          street: formData.get('street'),
+          neighborhood: formData.get('neighborhood'),
+          number: formData.get('number'),
+          city: formData.get('city'),
+          state: formData.get('state')
+        }
+      };
+
+      try {
+        const response = await fetch('/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro ao cadastrar usuário: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('Usuário cadastrado com sucesso:', result);
+        document.getElementById('message').innerText = 'Usuário cadastrado com sucesso!';
+        
+        // Limpar formulário após cadastro bem-sucedido
+        form.reset();
+      } catch (error) {
+        console.error(error);
+        document.getElementById('message').innerText = 'Erro ao cadastrar usuário. Tente novamente.';
+      }
+    }
+  </script>
+</body>
+</html>
